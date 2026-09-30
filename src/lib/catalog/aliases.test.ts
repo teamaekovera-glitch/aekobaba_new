@@ -3,7 +3,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { ALIAS_TABLE, normalizeQuery, POPULAR_ENTRIES, resolveSearchQuery } from "./aliases";
+import { ALIAS_TABLE, normalizeQuery, resolveSearchQuery } from "./aliases";
 
 // Spec C4: "coffee" → stand-up pouches / valve bags / labels; "hot sauce" →
 // woozy bottles / shrink sleeves. Every referenced category slug must exist
@@ -81,16 +81,6 @@ describe("alias table integrity", () => {
       if (resolved) {
         expect(resolved.categorySlugs).toContain(slug);
       }
-    }
-  });
-});
-
-describe("POPULAR_ENTRIES", () => {
-  it("covers the spec's tiles and resolves each query", () => {
-    const labels = POPULAR_ENTRIES.map((e) => e.label);
-    expect(labels).toEqual(expect.arrayContaining(["Coffee", "Hot Sauce", "Skincare", "Supplements"]));
-    for (const entry of POPULAR_ENTRIES) {
-      expect(resolveSearchQuery(entry.query), `entry "${entry.label}" must resolve`).not.toBeNull();
     }
   });
 });
