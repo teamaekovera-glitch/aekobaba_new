@@ -25,6 +25,9 @@ const productInclude = {
   },
   category: true,
   quantityBreaks: { orderBy: { minQty: "asc" } },
+  // Lowest sortOrder first — the seed writes exactly one primary image per
+  // product, so the first row is the card/detail image.
+  images: { orderBy: { sortOrder: "asc" } },
 } satisfies Prisma.ProductInclude;
 
 export async function getAllProducts(): Promise<ProductVM[]> {
@@ -70,6 +73,7 @@ export async function getSupplier(slug: string): Promise<SupplierWithCatalog | n
         include: {
           category: true,
           quantityBreaks: { orderBy: { minQty: "asc" } },
+          images: { orderBy: { sortOrder: "asc" } },
         },
         orderBy: { createdAt: "asc" },
       },

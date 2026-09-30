@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
+import {
+  createCategoryIndexWalker,
+  productImageRow,
+  writePrimaryImage,
+} from "../data/image-mapping";
 import { parseSeedFile, type SeedProduct, type SeedSupplier } from "../data/seed-schema";
 
 // Same env loading as prisma.config.ts — the documented `npm run db:seed`
@@ -16,7 +21,7 @@ import "dotenv/config";
  *  - categories upserted by slug
  *  - suppliers upserted by slug
  *  - products upserted by (supplierId, title) — the schema's @@unique pair
- *  - quantity breaks / reviews replaced per parent (they carry no natural key)
+ *  - quantity breaks / images / reviews replaced per parent (no natural key)
  *  - certifications upserted by (supplierId, name)
  *
  * Re-running against a seeded database updates rows in place; row counts do
@@ -60,7 +65,8 @@ async function upsertProduct(
   supplierId: string,
   product: SeedProduct,
   categoryId: string,
-  counts: Counts,
+  counts: { products: Counts; images: number },
+  nextImageIndex: (categorySlug: string) => number,
 ): Promise<number> {
   const values = {
     supplierId,
@@ -88,7 +94,7 @@ async function upsertProduct(
   const saved = existing
     ? await tx.product.update({ where: { id: existing.id }, data: values })
     : await tx.product.create({ data: values });
-  bump(counts, existing !== null);
+  bump(counts.products, existing !== null);
 
   // Breaks carry no natural key — replace them so re-runs converge on the
   // dataset's tier table exactly.
@@ -103,6 +109,13 @@ async function upsertProduct(
       })),
     });
   }
+
+  // Exactly one primary representative image per product, assigned by the
+  // deterministic category mapping (the stable per-category index rotates
+  // variants). Replace per product like the breaks — re-runs never
+  // duplicate Image rows.
+  await writePrimaryImage(tx, saved.id, productImageRow(product, nextImageIndex(product.categorySlug)));
+  counts.images += 1;
   return product.quantityBreaks.length;
 }
 
@@ -110,7 +123,8 @@ async function upsertSupplier(
   tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
   supplier: SeedSupplier,
   categoryIds: Map<string, string>,
-  counts: { suppliers: Counts; products: Counts; quantityBreaks: number },
+  counts: { suppliers: Counts; products: Counts; quantityBreaks: number; images: number },
+  nextImageIndex: (categorySlug: string) => number,
 ): Promise<void> {
   const values = {
     slug: supplier.slug,
@@ -171,7 +185,8 @@ async function upsertSupplier(
       saved.id,
       product,
       categoryId,
-      counts.products,
+      counts,
+      nextImageIndex,
     );
   }
 }
@@ -185,6 +200,7 @@ async function main(): Promise<void> {
     suppliers: emptyCounts(),
     products: emptyCounts(),
     quantityBreaks: 0,
+    images: 0,
   };
 
   await prisma.$transaction(async (tx) => {
@@ -212,8 +228,9 @@ async function main(): Promise<void> {
       }
     }
 
+    const nextImageIndex = createCategoryIndexWalker();
     for (const supplier of seed.suppliers) {
-      await upsertSupplier(tx, supplier, categoryIds, counts);
+      await upsertSupplier(tx, supplier, categoryIds, counts, nextImageIndex);
     }
   });
 
@@ -225,6 +242,7 @@ async function main(): Promise<void> {
         suppliers: counts.suppliers,
         products: counts.products,
         quantityBreakRows: counts.quantityBreaks,
+        imageRows: counts.images,
       },
       null,
       2,

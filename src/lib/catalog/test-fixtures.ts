@@ -23,14 +23,20 @@ interface FixtureOverrides {
   status?: ProductVM["supplier"]["status"];
   sourceCapturedAt?: string;
   sourceUrl?: string;
+  primaryImage?: ProductVM["primaryImage"];
 }
 
 export function makeProduct(overrides: FixtureOverrides = {}): ProductVM {
   const id = `prod_${String(nextId).padStart(3, "0")}`;
   nextId += 1;
+  const title = `Test Product ${id}`;
+  const primaryImage =
+    overrides.primaryImage === undefined
+      ? { url: "/products/glass-jar.png", alt: `${title} — representative packaging image` }
+      : overrides.primaryImage;
   return {
     id,
-    title: `Test Product ${id}`,
+    title,
     description: null,
     material: overrides.material ?? "Glass",
     materialFamily: overrides.material ? overrides.material : "Glass",
@@ -49,6 +55,7 @@ export function makeProduct(overrides: FixtureOverrides = {}): ProductVM {
     sourceUrl: overrides.sourceUrl ?? `https://supplier.example/${id}`,
     sourceCapturedAt: overrides.sourceCapturedAt ?? "2026-09-18T00:00:00Z",
     quantityBreaks: [],
+    primaryImage,
     supplier: {
       slug: "test-supplier",
       name: "Test Supplier Co",
