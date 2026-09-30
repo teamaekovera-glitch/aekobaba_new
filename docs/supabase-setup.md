@@ -44,12 +44,41 @@ environment.
 npx prisma migrate deploy
 ```
 
-The CLI resolves its connection from `prisma.config.ts` → `DIRECT_URL`. This
-scaffold PR ships the datasource wiring only; the domain schema PR adds the
-first real migrations. For local schema iteration you will use
-`npx prisma migrate dev` once those migrations exist.
+The CLI resolves its connection from `prisma.config.ts` → `DIRECT_URL`. The
+domain schema (users, suppliers, products, quotes, …) arrives with the first
+migration; `npx prisma migrate dev` is for local schema iteration.
 
-## 4. Create the Storage buckets
+## 4. Create the role-lookup RPC
+
+The role guard reads the signed-in user's role from the database at request
+time — the DB is the source of truth, never the JWT. Edge middleware cannot
+use Prisma, so it calls this SQL function over PostgREST instead. Run it in
+Dashboard → **SQL Editor**:
+
+```sql
+-- Returns the caller's own role. Takes no arguments (only ever leaks your
+-- own row), runs as the definer so it reads through RLS, and returns NULL
+-- for unknown identities — the app treats NULL as "no access".
+create or replace function public.current_user_role()
+returns text
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select role::text
+  from public."User"
+  where "supabaseUserId" = auth.uid()
+    and role is not null;
+$$;
+
+grant execute on function public.current_user_role() to anon, authenticated;
+```
+
+Verify: `select public.current_user_role();` should return `NULL` (signed out)
+or a role value once a signed-in user exists.
+
+## 5. Create the Storage buckets
 
 Dashboard → **Storage** → **New bucket** — create all three as **private**:
 
@@ -57,7 +86,7 @@ Dashboard → **Storage** → **New bucket** — create all three as **private**
 - `product-images` — product photography
 - `artwork-uploads` — brand artwork attached to quote requests
 
-## 5. Enable the Auth providers
+## 6. Enable the Auth providers
 
 Dashboard → **Authentication → Sign In / Up** and **Providers**:
 
@@ -67,7 +96,15 @@ Dashboard → **Authentication → Sign In / Up** and **Providers**:
   Authorized redirect URI:
   `https://<project-ref>.supabase.co/auth/v1/callback`
 
-## 6. Environment variables
+Then under **Authentication → URL Configuration**, allow-list every origin the
+app runs on — confirmation emails, magic links, and the Google round-trip all
+return through `<origin>/auth/callback`, and Supabase rejects unlisted
+redirect URLs:
+
+- `http://localhost:3000` (local development)
+- your production URL, e.g. `https://aekobaba.com`
+
+## 7. Environment variables
 
 Paste the remaining values from **Project Settings → API** into `.env`:
 
@@ -85,7 +122,7 @@ Complete `.env` checklist:
 - [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - [ ] `SUPABASE_SERVICE_ROLE_KEY`
 
-## 7. Verify
+## 8. Verify
 
 ```bash
 npm run build   # passes with or without credentials
