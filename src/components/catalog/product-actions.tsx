@@ -41,7 +41,7 @@ export function ProductActions({
         onClick={() => onAddToShortlist(product)}
         className={`${compact} border-neutral-300 bg-white text-ink hover:bg-accent-soft`}
       >
-        Shortlist
+        Add to Shortlist
       </button>
       <button
         type="button"

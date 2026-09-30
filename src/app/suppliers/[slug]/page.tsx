@@ -29,8 +29,6 @@ export default async function SupplierPage({ params }: SupplierPageProps) {
   const supplier = await getSupplier(slug);
   if (!supplier) notFound();
 
-  const unclaimed = supplier.status === "PENDING";
-
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <header className="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm">
@@ -67,15 +65,16 @@ export default async function SupplierPage({ params }: SupplierPageProps) {
           </div>
           <div className="flex flex-col items-end gap-2">
             <TierBadge status={supplier.status} />
-            {unclaimed ? (
-              <a
-                href={`/suppliers/${supplier.slug}/claim`}
-                data-testid="claim-listing"
-                className="rounded-md border border-accent px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-white"
-              >
-                Claim This Listing
-              </a>
-            ) : null}
+            {/* No seeded supplier has an owning user yet, so the claim CTA
+                shows on every profile. The supplier-admin work replaces this
+                with an ownership check (claimed listings hide the CTA). */}
+            <a
+              href={`/suppliers/${supplier.slug}/claim`}
+              data-testid="claim-listing"
+              className="rounded-md border border-accent px-3 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent hover:text-white"
+            >
+              Is this your company? Claim This Listing
+            </a>
           </div>
         </div>
       </header>
