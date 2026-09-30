@@ -12,6 +12,12 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Aekobaba accent — deep navy on neutral surfaces (trust direction). */
+@theme {
+  --color-accent: #16324f;
+  --color-accent-dark: #0f2338;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
