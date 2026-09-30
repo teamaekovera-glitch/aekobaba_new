@@ -57,3 +57,12 @@ INSERT INTO "QuoteRequestItem" (id, "quoteRequestId", "productId", quantity, sta
   ('dev-quote-item-1', 'dev-quote-1', 'dev-product-pouch', 5000, 'SENT', now()),
   ('dev-quote-item-2', 'dev-quote-1', 'dev-product-jar',   120,  'SENT', now())
 ON CONFLICT (id) DO NOTHING;
+
+-- Ownership is an UPDATE (not an INSERT) so re-runs keep it true even after a
+-- browser walk clears or claims rows: the dev SUPPLIER user owns the active
+-- listing; the queue and unclaimed listings stay claimable through the UI.
+UPDATE "Supplier" SET "ownerUserId" = 'dev-supplier-user', "updatedAt" = now()
+  WHERE id = 'dev-supplier-active';
+UPDATE "Supplier" SET "ownerUserId" = NULL WHERE id = 'dev-supplier-queue';
+UPDATE "Supplier" SET "ownerUserId" = NULL, status = 'LISTED' WHERE id = 'dev-supplier-unclaimed';
+UPDATE "User" SET role = 'BRAND', "updatedAt" = now() WHERE id = 'dev-brand-user';
