@@ -128,3 +128,34 @@ Complete `.env` checklist:
 npm run build   # passes with or without credentials
 npm run dev     # scaffold renders; Supabase features activate as later PRs land
 ```
+
+
+## 9. Launch checklist — user config required
+
+Everything below needs a human with Supabase/Vercel access. The app ships and
+builds without any of it (the dev harness and the SSE bridge keep every surface
+working); these steps switch it to the real, live configuration. Nothing here is
+faked by the code.
+
+- [ ] **Create the Supabase project** (section 1) — takes ~5 minutes on the
+      dashboard.
+- [ ] **Paste the connection strings** into `.env` locally and into the Vercel
+      project env vars: `DATABASE_URL` (pooler, 6543) and `DIRECT_URL` (5432)
+      (section 2).
+- [ ] **Run migrations against Supabase**: `npx prisma migrate deploy` with
+      `DIRECT_URL` set (section 3).
+- [ ] **Create the `current_user_role()` SQL function** (section 4) — the role
+      guard queries it; without it every signed-in session resolves to BRAND
+      only.
+- [ ] **Create the three Storage buckets** — `supplier-logos`,
+      `product-images`, `artwork-uploads` (section 5).
+- [ ] **Enable the Auth providers** — Email (with confirmations), Magic Link,
+      Google (needs a Google OAuth client id/secret) (section 6).
+- [ ] **Add the production redirect URLs** to Supabase Auth URL Configuration:
+      `https://<your-domain>/auth/callback` plus your preview URLs.
+- [ ] **Seed the catalog**: `npm run db:seed` against the Supabase `DATABASE_URL`
+      (idempotent — safe to re-run whenever the dataset is refreshed).
+- [ ] **Set `NEXT_PUBLIC_SITE_URL`** in Vercel to the production domain so
+      Open Graph URLs are absolute.
+- [ ] **Import the Vercel project** (framework preset: Next.js) — see
+      `DEPLOY.md` for the exact env-var list and build settings.
