@@ -1,15 +1,19 @@
-// Aekobaba Packaging Marketplace — Prisma data contract.
+// Aekobaba Packaging Marketplace — Prisma data contract (build spec art_MObD9666).
 //
-// This scaffold PR wires the datasource and generator only. The full domain
-// schema (User, Supplier, Product, QuantityBreak, QuoteRequest, ...) arrives in
-// the schema PR per the build spec (art_MObD9666).
+// Two spec rules shape everything below:
 //
-// Prisma 7 keeps connection URLs out of the schema file:
-//   - prisma.config.ts datasource.url ← DIRECT_URL (direct connection, port 5432)
-//     — used by the Prisma CLI for migrations (migrate deploy/dev, studio).
-//   - The runtime client reads DATABASE_URL — the Supabase pooler (transaction
-//     mode, port 6543) — from the environment at instantiation time.
-// See docs/supabase-setup.md for where these values come from.
+// 1. Provenance is structural. A commercial fact (price, MOQ, lead time, review,
+//    certification) is stored only as a dated snapshot of the supplier's own
+//    public page: `sourceUrl` + `sourceCapturedAt`. On Product these are NOT
+//    NULL — a row that cannot be traced to a source cannot be stored at all.
+//
+// 2. Null means "Ask the supplier". basePrice, moq and leadTimeDays are nullable
+//    on purpose: null is the supplier-does-not-publish-it signal. No component
+//    may substitute a default, midpoint, or range the supplier never published.
+//
+// Connection URLs stay out of this file (Prisma 7): prisma.config.ts points the
+// CLI at DIRECT_URL (direct connection, migrations), and the runtime client
+// reads DATABASE_URL (Supabase pooler). See docs/supabase-setup.md.
 
 generator client {
   provider = "prisma-client-js"
@@ -17,4 +21,389 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  BRAND
+  SUPPLIER
+  ADMIN
+}
+
+// Supplier tier per the four verification gates: Recommended / Listed /
+// Quote only — plus pre-verification (PENDING) and disabled.
+enum SupplierStatus {
+  PENDING
+  LISTED
+  RECOMMENDED
+  QUOTE_ONLY
+  DISABLED
+}
+
+// How the supplier publishes price on their own page. QUOTE_ONLY means no
+// public price at all — the row still exists, it just never shows a number.
+enum PriceType {
+  EXACT
+  CALCULATOR
+  FROM
+  QUOTE_ONLY
+}
+
+enum StockOrCustom {
+  STOCK
+  CUSTOM
+}
+
+// Request-level status. Item-level truth lives on QuoteRequestItem: a request
+// becomes RESPONDED once any supplier answers an item.
+enum QuoteStatus {
+  DRAFT
+  SENT
+  RESPONDED
+  CLOSED
+}
+
+// One QuoteRequest fans out to one item per product; each item is answered
+// (or expires) independently per supplier.
+enum QuoteItemStatus {
+  SENT
+  QUOTED
+  DECLINED
+  EXPIRED
+}
+
+// Sample-kit logistics stay out of scope for this build; the lifecycle below
+// covers the honest minimum (the sample button only appears when the
+// supplier's sample policy is verified).
+enum SampleRequestStatus {
+  REQUESTED
+  APPROVED
+  SHIPPED
+  DECLINED
+}
+
+// ─── Identity ────────────────────────────────────────────────────────────────
+
+model User {
+  id     String @id @default(cuid())
+  email  String @unique
+  role   Role   @default(BRAND)
+  // Supabase Auth subject (auth.users.id). Identity always comes from the
+  // session — never from a client-sent ID.
+  supabaseUserId String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brandProfile   BrandProfile?
+  supplierOrg    Supplier?       @relation("SupplierOwner")
+  quoteRequests  QuoteRequest[]
+  sampleRequests SampleRequest[]
+  savedLists     SavedList[]
+}
+
+model BrandProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id])
+  companyName String
+  region      String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─── Catalog ─────────────────────────────────────────────────────────────────
+
+model Supplier {
+  id             String         @id @default(cuid())
+  slug           String         @unique
+  name           String
+  website        String
+  // Country/region facet for the Results filters.
+  location       String
+  // Registered entity, traceable — one of the four verification gates.
+  legalIdentity  String?
+  reviewScore    Float?
+  reviewCount    Int            @default(0)
+  // When the listing was last re-checked against the supplier's site.
+  lastVerifiedAt DateTime?
+  status         SupplierStatus @default(PENDING)
+  isPartner      Boolean        @default(false)
+  // Shown once real data exists — never estimated.
+  responseTimeHours Int?
+  logoUrl        String?
+  // Set when a SUPPLIER user claims the listing; null until claimed.
+  ownerUserId    String?        @unique
+  owner          User?          @relation("SupplierOwner", fields: [ownerUserId], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  products             Product[]
+  reviews              Review[]
+  certifications       Certification[]
+  partnerSubscriptions PartnerSubscription[]
+  featuredPlacements   FeaturedPlacement[]
+
+  @@index([location])
+  @@index([status])
+  @@index([reviewScore])
+}
+
+// Taxonomy of packaging categories, seeded from the CPG Packaging Taxonomy
+// research. Self-relation gives the tree: "Bottles & Jars" → "Woozy Bottles".
+model Category {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  parentId    String?
+  parent      Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryTree")
+  createdAt   DateTime @default(now())
+
+  products Product[]
+
+  @@index([parentId])
+}
+
+// One row = one real SKU from one supplier (never a generic category entry).
+model Product {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  title      String
+  description String?
+  material   String
+  // Finer subtype label from the taxonomy (display-level); the tree link is
+  // categoryId.
+  subcategory String?
+
+  priceType PriceType
+
+  // Null = the supplier does not publish it → "Ask the supplier".
+  basePrice Decimal? @db.Decimal(12, 4)
+  // What the price buys: "per jar", "per case of 12", "per carton of 1000".
+  priceBasis String?
+  // Computed per-unit figure shown next to the basis.
+  priceUnit Decimal? @db.Decimal(12, 4)
+
+  moq          Int?
+  moqUnit      String?
+  leadTimeDays Int?
+
+  stockOrCustom StockOrCustom
+  // The Request Sample action is rendered only when this is true — the
+  // sample button never lies.
+  samplePolicyVerified Boolean @default(false)
+
+  // Provenance contract: every value on this row is a snapshot of exactly
+  // this page, captured at exactly this time. Rendered next to every price.
+  sourceUrl        String
+  sourceCapturedAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quantityBreaks    QuantityBreak[]
+  images            Image[]
+  quoteRequestItems QuoteRequestItem[]
+  sampleRequests    SampleRequest[]
+  savedListItems    SavedListItem[]
+
+  // The seed importer's idempotency key (supplier slug + product title),
+  // enforced at the database level.
+  @@unique([supplierId, title])
+  @@index([supplierId])
+  @@index([categoryId])
+  @@index([priceType])
+  @@index([stockOrCustom])
+  @@index([material])
+  @@index([moq])
+  @@index([leadTimeDays])
+}
+
+// Quantity-tier pricing ("500-999 → $0.47"). Open-ended top tier leaves
+// maxQty null. Provenance is inherited from the product's sourceUrl +
+// sourceCapturedAt — tiers never carry their own source.
+model QuantityBreak {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  minQty    Int
+  maxQty    Int?
+  unitPrice Decimal @db.Decimal(12, 4)
+
+  @@index([productId])
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Supabase Storage object URL.
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+}
+
+// Review evidence lives in its own table so aggregate scores stay traceable:
+// per-source ALLOW/RESTRICTED/DISALLOWED verdicts require knowing exactly
+// which platform a score came from and when we captured it.
+model Review {
+  id               String   @id @default(cuid())
+  supplierId       String
+  supplier         Supplier @relation(fields: [supplierId], references: [id])
+  score            Float
+  sourcePlatform   String
+  // When the review was published on the source platform.
+  reviewedAt       DateTime
+  // Provenance: the page the review evidence was read from, and when.
+  sourceUrl        String
+  sourceCapturedAt DateTime
+  summary          String?
+  createdAt        DateTime @default(now())
+
+  @@index([supplierId])
+}
+
+// Certifications are issued to companies, not SKUs, so they attach to the
+// supplier; product pages surface them through the supplier relation. That
+// keeps the claim honest: we never imply SKU-level certification a source
+// page does not state.
+model Certification {
+  id               String   @id @default(cuid())
+  supplierId       String
+  supplier         Supplier @relation(fields: [supplierId], references: [id])
+  name             String
+  authority        String?
+  sourceUrl        String
+  sourceCapturedAt DateTime
+  createdAt        DateTime @default(now())
+
+  @@unique([supplierId, name])
+}
+
+// ─── Quote Basket ────────────────────────────────────────────────────────────
+
+// One request from a brand. The single submission form fans out into one
+// QuoteRequestItem per selected product — items from five suppliers means
+// five rows in one request, grouped per supplier in their inboxes.
+model QuoteRequest {
+  id          String      @id @default(cuid())
+  brandUserId String
+  brand       User        @relation(fields: [brandUserId], references: [id])
+  status      QuoteStatus @default(DRAFT)
+  deadline    DateTime?
+  artworkNotes String?
+  // Supabase Storage object URL.
+  artworkFileUrl String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  items QuoteRequestItem[]
+
+  @@index([brandUserId])
+  @@index([status])
+}
+
+model QuoteRequestItem {
+  id             String          @id @default(cuid())
+  quoteRequestId String
+  quoteRequest   QuoteRequest    @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product         @relation(fields: [productId], references: [id])
+  // Validated against the product's MOQ at submission — warned below MOQ,
+  // never blocked: the brand may ask a supplier to bend their minimum.
+  quantity       Int
+  status         QuoteItemStatus @default(SENT)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([quoteRequestId])
+  @@index([productId])
+  @@index([status])
+}
+
+// ─── Samples & shortlists ────────────────────────────────────────────────────
+
+model SampleRequest {
+  id          String              @id @default(cuid())
+  brandUserId String
+  brand       User                @relation(fields: [brandUserId], references: [id])
+  productId   String
+  product     Product             @relation(fields: [productId], references: [id])
+  quantity    Int?
+  notes       String?
+  status      SampleRequestStatus @default(REQUESTED)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([brandUserId])
+  @@index([productId])
+  @@index([status])
+}
+
+model SavedList {
+  id          String   @id @default(cuid())
+  brandUserId String
+  brand       User     @relation(fields: [brandUserId], references: [id])
+  name        String   @default("Shortlist")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items SavedListItem[]
+
+  // One list per name per brand — re-adding to the same shortlist stays
+  // idempotent. (Leftmost column covers brandUserId lookups.)
+  @@unique([brandUserId, name])
+}
+
+model SavedListItem {
+  id          String     @id @default(cuid())
+  savedListId String
+  savedList   SavedList  @relation(fields: [savedListId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id])
+  note        String?
+  createdAt   DateTime   @default(now())
+
+  @@unique([savedListId, productId])
+  @@index([productId])
+}
+
+// ─── Monetization stubs ──────────────────────────────────────────────────────
+// The revenue model (subscription vs per-lead) is deliberately undecided in
+// the spec's open questions. These tables exist so neither direction needs a
+// migration later. No UI ships against them in this build.
+
+model PartnerSubscription {
+  id         String    @id @default(cuid())
+  supplierId String
+  supplier   Supplier  @relation(fields: [supplierId], references: [id])
+  // Plan shape is intentionally open until the revenue model is decided.
+  plan       String?
+  startedAt  DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([supplierId])
+}
+
+model FeaturedPlacement {
+  id         String    @id @default(cuid())
+  supplierId String
+  supplier   Supplier  @relation(fields: [supplierId], references: [id])
+  // e.g. "results-top", "category-hero" — placement inventory undecided.
+  placement  String?
+  startsAt   DateTime?
+  endsAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([supplierId])
 }
