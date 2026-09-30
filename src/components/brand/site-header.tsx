@@ -15,9 +15,9 @@ export function SiteHeader() {
     <header className="border-b border-neutral-200 bg-accent text-white">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-4">
         <Link href="/" aria-label="Aekobaba — home" className="shrink-0">
-          {/* Mono logo reads cleanly on the navy surface. */}
+          {/* Reversed white logo reads cleanly on the navy surface. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/logo-mono.png" alt="Aekobaba" className="h-9 w-auto" />
+          <img src="/brand/logo-white.png" alt="Aekobaba" className="h-9 w-auto" />
         </Link>
 
         <form action="/results" role="search" className="order-3 w-full sm:order-none sm:w-auto sm:flex-1">
