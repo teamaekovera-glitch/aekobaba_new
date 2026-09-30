@@ -27,6 +27,11 @@ export interface QuantityBreakVM {
   unitPrice: number;
 }
 
+export interface ProductImageVM {
+  url: string;
+  alt: string | null;
+}
+
 export interface ProductVM {
   id: string;
   title: string;
@@ -52,6 +57,8 @@ export interface ProductVM {
   /** ISO timestamp of the capture rendered next to every price. */
   sourceCapturedAt: string;
   quantityBreaks: QuantityBreakVM[];
+  /** Primary representative image; null only if a product has no Image row. */
+  primaryImage: ProductImageVM | null;
   supplier: SupplierSummaryVM;
   /** Supplier-level certification names (certs attach to companies, not SKUs). */
   certificationNames: string[];
@@ -100,6 +107,7 @@ export interface ProductWithRelations {
   sourceUrl: string;
   sourceCapturedAt: Date;
   quantityBreaks: { minQty: number; maxQty: number | null; unitPrice: { toNumber(): number } }[];
+  images: { url: string; alt: string | null }[];
   supplier: {
     slug: string;
     name: string;
@@ -189,6 +197,7 @@ export function toProductVM(row: ProductWithRelations): ProductVM {
       maxQty: b.maxQty,
       unitPrice: toNumber(b.unitPrice) as number,
     })),
+    primaryImage: row.images[0] ? { url: row.images[0].url, alt: row.images[0].alt } : null,
     supplier: {
       slug: row.supplier.slug,
       name: row.supplier.name,

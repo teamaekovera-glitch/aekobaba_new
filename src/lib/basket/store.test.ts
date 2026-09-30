@@ -45,6 +45,10 @@ function productVM(overrides: Partial<ProductVM> = {}): ProductVM {
     sourceUrl: "https://www.containerandpackaging.com/item/amber-boston",
     sourceCapturedAt: "2026-09-18T00:00:00.000Z",
     quantityBreaks: [{ minQty: 1, maxQty: null, unitPrice: 0.58 }],
+    primaryImage: {
+      url: "/products/glass-bottle-amber.png",
+      alt: "12 oz Amber PET Boston Round Bottle — representative packaging image",
+    },
     supplier: {
       slug: "container-and-packaging",
       name: "Container & Packaging",
