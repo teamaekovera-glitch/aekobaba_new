@@ -15,6 +15,9 @@ import { getProduct } from "@/lib/catalog/queries";
 // MOQ, lead time, certifications, supplier score, and the provenance line
 // linking the exact supplier page and capture date (spec C2/C6/C7).
 
+// Catalog pages render at request time — the build must never need a database.
+export const dynamic = "force-dynamic";
+
 interface ProductPageProps {
   params: Promise<{ id: string }>;
 }

@@ -1,13 +1,14 @@
 import Link from "next/link";
 
-import { getCategories } from "@/lib/catalog/queries";
+import { CATEGORY_MENU } from "@/lib/catalog/menu";
 
 // Amazon-style header: logo, search over everything, and the category menu.
 // Server-rendered with no client JS — the category menu is a native
-// <details> disclosure, and search is a plain GET form to /results.
+// <details> disclosure, and search is a plain GET form to /results. The menu
+// is static navigation (src/lib/catalog/menu.ts) — no DB query, so pages that
+// prerender at build stay build-safe.
 
-export async function SiteHeader() {
-  const categories = await getCategories();
+export function SiteHeader() {
 
   return (
     <header className="border-b border-neutral-200 bg-accent text-white">
@@ -54,14 +55,13 @@ export async function SiteHeader() {
             </summary>
             <div className="absolute left-0 z-20 mt-0 w-80 rounded-b-md border border-neutral-200 bg-white py-2 shadow-lg">
               <ul>
-                {categories.map((category) => (
+                {CATEGORY_MENU.map((category) => (
                   <li key={category.slug}>
                     <Link
                       href={`/results?category=${encodeURIComponent(category.slug)}`}
-                      className="flex items-center justify-between px-4 py-1.5 text-sm text-ink hover:bg-accent-soft"
+                      className="block px-4 py-1.5 text-sm text-ink hover:bg-accent-soft"
                     >
-                      <span>{category.name}</span>
-                      <span className="ml-3 shrink-0 text-xs text-neutral-400">{category.productCount}</span>
+                      {category.name}
                     </Link>
                   </li>
                 ))}

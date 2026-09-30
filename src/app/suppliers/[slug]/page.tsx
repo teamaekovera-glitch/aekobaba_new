@@ -11,6 +11,9 @@ import { getSupplier } from "@/lib/catalog/queries";
 // Listing entry point linking the existing claim flow from PR #3's
 // successor — the flow is not rebuilt here.
 
+// Catalog pages render at request time — the build must never need a database.
+export const dynamic = "force-dynamic";
+
 interface SupplierPageProps {
   params: Promise<{ slug: string }>;
 }

@@ -8,6 +8,9 @@ import { POPULAR_ENTRIES } from "@/lib/catalog/aliases";
 // search through the taxonomy aliases, popular entry tiles into pre-filtered
 // results, and the full category grid. Everything browsable signed-out.
 
+// Catalog pages render at request time — the build must never need a database.
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const categories = await getCategories();
 

@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   title: "Results",
 };
 
+// Catalog pages render at request time — the build must never need a database.
+export const dynamic = "force-dynamic";
+
 interface ResultsPageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
