@@ -57,6 +57,8 @@ export interface ProductVM {
   /** ISO timestamp of the capture rendered next to every price. */
   sourceCapturedAt: string;
   quantityBreaks: QuantityBreakVM[];
+  /** All Image rows, sortOrder ascending — the product-page gallery data. */
+  images: ProductImageVM[];
   /** Primary representative image; null only if a product has no Image row. */
   primaryImage: ProductImageVM | null;
   supplier: SupplierSummaryVM;
@@ -197,6 +199,7 @@ export function toProductVM(row: ProductWithRelations): ProductVM {
       maxQty: b.maxQty,
       unitPrice: toNumber(b.unitPrice) as number,
     })),
+    images: row.images.map((image) => ({ url: image.url, alt: image.alt })),
     primaryImage: row.images[0] ? { url: row.images[0].url, alt: row.images[0].alt } : null,
     supplier: {
       slug: row.supplier.slug,
