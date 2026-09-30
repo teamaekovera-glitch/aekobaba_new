@@ -1,15 +1,15 @@
 // ─── Integration point: product action handlers ─────────────────────────────
 //
 // The three product actions (Quote Basket, Shortlist, Compare) are wired
-// client-side, but their stores do not exist yet: the Quote Basket lands in
-// the next PR. This module is the ONE place those handlers live. The
-// quote-basket PR replaces these stubs with real store calls — the
-// components and pages never change.
+// client-side. Quote Basket is live (zustand store, anonymous collection);
+// Shortlist, Compare, and Sample land in their own PRs and stay honest
+// stubs — no button pretends a feature exists.
 //
-// Stubs are honest: they log to the console and do nothing visible. No
-// button pretends a feature exists (no toast saying "added", no fake badge).
+// Components and pages never change: they resolve handlers through this
+// module only.
 
 import type { ProductVM } from "@/lib/catalog/view-models";
+import { useQuoteBasketStore } from "@/lib/basket/store";
 
 export type ProductActionHandler = (product: ProductVM) => void;
 
@@ -17,13 +17,19 @@ function stub(action: string): ProductActionHandler {
   return (product) => {
     console.info(
       `[aekobaba] ${action} is not wired yet — "${product.title}" (${product.id}). ` +
-        `See src/lib/integrations/product-actions.ts, the integration point for the Quote Basket PR.`,
+        `See src/lib/integrations/product-actions.ts, the integration point for product actions.`,
     );
   };
 }
 
-/** Wire the real Quote Basket store here (next PR). */
-export const addToQuoteBasket: ProductActionHandler = stub("Add to Quote Basket");
+/**
+ * Quote Basket collection is anonymous and client-side: the full ProductVM is
+ * snapshotted into the zustand basket (localStorage-persisted) with a
+ * MOQ-defaulted quantity, and the header badge count updates in place.
+ */
+export const addToQuoteBasket: ProductActionHandler = (product) => {
+  useQuoteBasketStore.getState().addProduct(product);
+};
 
 /** Wire the signed-in shortlist flow here. */
 export const addToShortlist: ProductActionHandler = stub("Add to Shortlist");
