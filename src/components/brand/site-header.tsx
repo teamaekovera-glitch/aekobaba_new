@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CATEGORY_MENU } from "@/lib/catalog/menu";
+import { BasketBadge } from "@/components/quotes/basket-badge";
 
 // Amazon-style header: logo, search over everything, and the category menu.
 // Server-rendered with no client JS — the category menu is a native
@@ -41,6 +42,7 @@ export function SiteHeader() {
         </form>
 
         <nav className="ml-auto flex items-center gap-4 text-sm">
+          <BasketBadge />
           <Link href="/auth/sign-in" className="whitespace-nowrap text-white/90 hover:text-white hover:underline">
             Sign in
           </Link>
