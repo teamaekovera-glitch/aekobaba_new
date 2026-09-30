@@ -64,7 +64,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
           ) : null}
 
           {products.length > 0 ? (
-            <div data-testid="results-grid" className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div data-testid="results-grid" className="mt-6 grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 xl:grid-cols-3">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

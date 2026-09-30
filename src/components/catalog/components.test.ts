@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PriceDisplay, PriceTagInline } from "./price-display";
 import { ProductActions } from "./product-actions";
+import { ProductCard } from "./product-card";
 import { ProvenanceLine } from "./provenance-line";
 import { ReviewScore } from "./review-score";
 import { TierBadge } from "./tier-badge";
@@ -127,6 +128,55 @@ describe("ReviewScore", () => {
     const html = render(createElement(ReviewScore, { reviewScore: null, reviewCount: 0, reviewPlatform: null }));
     expect(html).toContain("No published reviews");
     expect(html).not.toContain("★");
+  });
+});
+
+describe("ProductCard — image-led results card", () => {
+  it("leads with the representative packshot, alt text labelled 'representative'", () => {
+    const product = makeProduct();
+    const html = render(createElement(ProductCard, { product }));
+
+    expect(html).toContain("aspect-square");
+    const alt = html.match(/alt="([^"]*)"/);
+    expect(alt?.[1]).toContain("representative");
+  });
+
+  it("keeps every evidence element on the card (provenance regression guard)", () => {
+    const product = makeProduct();
+    const html = render(createElement(ProductCard, { product }));
+
+    expect(html).toContain(product.title);
+    expect(html).toContain('href="/suppliers/test-supplier"');
+    expect(html).toContain('data-testid="tier-badge"');
+    expect(html).toContain("$1.23");
+    expect(html).toContain("Min order:");
+    expect(html).toContain("500 units");
+    expect(html).toContain("Lead time:");
+    expect(html).toContain("14 days");
+    expect(html).toContain("Material:");
+    expect(html).toContain("4.5 (214)");
+    expect(html).toContain("via Trustpilot");
+    // Imagery must not evict evidence: the provenance line stays on the card.
+    expect(html).toContain('data-testid="provenance-line"');
+    expect(html).toContain("Verified from");
+  });
+
+  it("collapses the price to 'Ask the supplier' with no numerals on the card", () => {
+    const html = render(createElement(ProductCard, { product: makeProduct({ basePrice: null }) }));
+    expect(html).toContain("Ask the supplier");
+    expect(html).not.toContain("$");
+  });
+
+  it("links the card to the product page from image and title", () => {
+    const product = makeProduct();
+    const html = render(createElement(ProductCard, { product }));
+    expect(html.match(new RegExp(`href="/products/${product.id}"`, "g"))?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("renders a neutral placeholder instead of an img when a product has no image", () => {
+    const html = render(createElement(ProductCard, { product: makeProduct({ primaryImage: null }) }));
+    expect(html).not.toContain("<img");
+    expect(html).toContain("No image available");
   });
 });
 
