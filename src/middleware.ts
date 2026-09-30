@@ -1,6 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import {
+  DEV_AUTH_COOKIE,
+  devAuthEnabled,
+  devAuthRole,
+} from "@/lib/auth/dev-auth";
 import { guardDecision, guardForPath } from "@/lib/auth/guard";
 import { parseUserRole } from "@/lib/auth/roles";
 import { supabaseEnv } from "@/lib/supabase/server";
@@ -22,6 +27,23 @@ export async function middleware(request: NextRequest) {
 
   // Public route: forward as-is. Anonymous browsing never touches auth.
   if (!requiredRole) return NextResponse.next({ request });
+
+  // Dev harness (pending Supabase creds): role comes from the dev cookie and
+  // the same fail-closed decision matrix. Inert in production builds.
+  if (devAuthEnabled()) {
+    const devRole = devAuthRole(request.cookies.get(DEV_AUTH_COOKIE)?.value);
+    const devDecision = guardDecision({
+      pathWithQuery: request.nextUrl.pathname + request.nextUrl.search,
+      hasSession: devRole !== null,
+      role: devRole,
+    });
+    if (devDecision.kind === "redirect") {
+      return NextResponse.redirect(
+        new URL(devDecision.to, request.nextUrl.origin),
+      );
+    }
+    return NextResponse.next({ request });
+  }
 
   let response = NextResponse.next({ request });
 

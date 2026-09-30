@@ -15,6 +15,14 @@ export const GUARD_RULES: readonly GuardedPrefix[] = [
   { prefix: "/admin", requiredRole: "ADMIN" },
 ];
 
+/**
+ * Paths under a guarded prefix that ANY signed-in user may open. The claim
+ * page is how a brand user becomes a supplier — requiring SUPPLIER there
+ * would make the flow unreachable. Anything else under /supplier and /admin
+ * keeps its strict role.
+ */
+export const ANY_AUTH_PATHS: readonly string[] = ["/supplier/claim"];
+
 export const SIGN_IN_PATH = "/auth/sign-in";
 export const ACCESS_DENIED_PATH = "/auth/access-denied";
 
@@ -30,6 +38,13 @@ export function guardForPath(pathname: string): UserRole | null {
     }
   }
   return null;
+}
+
+/** True when the path opens to any signed-in user (see ANY_AUTH_PATHS). */
+export function isAnyAuthPath(pathname: string): boolean {
+  return ANY_AUTH_PATHS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
 }
 
 export type GuardDecision =
@@ -59,7 +74,7 @@ export function guardDecision(input: {
     return { kind: "redirect", to: `${SIGN_IN_PATH}?next=${next}` };
   }
 
-  if (input.role !== requiredRole) {
+  if (input.role !== requiredRole && !isAnyAuthPath(pathname)) {
     return { kind: "redirect", to: ACCESS_DENIED_PATH };
   }
 

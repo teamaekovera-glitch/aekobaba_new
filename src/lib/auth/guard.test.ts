@@ -98,6 +98,46 @@ describe("guardDecision", () => {
       }),
     ).toEqual({ kind: "allow" });
   });
+
+  it("opens the claim page to any signed-in role — it is the page that makes a supplier", () => {
+    expect(
+      guardDecision({
+        pathWithQuery: "/supplier/claim",
+        hasSession: true,
+        role: "BRAND",
+      }),
+    ).toEqual({ kind: "allow" });
+    expect(
+      guardDecision({
+        pathWithQuery: "/supplier/claim",
+        hasSession: true,
+        role: "ADMIN",
+      }),
+    ).toEqual({ kind: "allow" });
+  });
+
+  it("still requires sign-in for the claim page and denies anonymous visitors", () => {
+    expect(
+      guardDecision({
+        pathWithQuery: "/supplier/claim",
+        hasSession: false,
+        role: null,
+      }),
+    ).toEqual({
+      kind: "redirect",
+      to: `/auth/sign-in?next=${encodeURIComponent("/supplier/claim")}`,
+    });
+  });
+
+  it("keeps the strict role for the rest of the supplier area", () => {
+    expect(
+      guardDecision({
+        pathWithQuery: "/supplier/inbox",
+        hasSession: true,
+        role: "BRAND",
+      }),
+    ).toEqual({ kind: "redirect", to: "/auth/access-denied" });
+  });
 });
 
 describe("role values vs the Prisma schema", () => {
