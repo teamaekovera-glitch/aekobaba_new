@@ -5,9 +5,9 @@ send one multi-supplier quote request. Every price, MOQ, and lead time is a
 verified, dated snapshot from the supplier's own public page — when a supplier
 doesn't publish something, the UI says "Ask the supplier", never an estimate.
 
-This is the **foundation scaffold** PR: stack, env contract, and CI gates. The
-domain schema, brand journey, and Quote Basket land in subsequent PRs per the
-build spec.
+The repo ships the foundation scaffold (stack, env contract, CI gates) and the
+Prisma domain schema — the data contract every later PR reads from. The brand
+journey and Quote Basket land in subsequent PRs per the build spec.
 
 ## Stack
 
@@ -35,17 +35,28 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Scripts
 
-| Command                | What it does               |
-| ---------------------- | -------------------------- |
-| `npm run dev`          | Dev server (Turbopack)     |
-| `npm run build`        | Production build           |
-| `npm run start`        | Serve the production build |
-| `npm run lint`         | ESLint                     |
-| `npm run typecheck`    | `tsc --noEmit`             |
-| `npm test`             | Vitest (single run)        |
-| `npm run test:watch`   | Vitest watch mode          |
-| `npm run format`       | Prettier — write           |
-| `npm run format:check` | Prettier — check           |
+| Command                     | What it does                                    |
+| --------------------------- | ----------------------------------------------- |
+| `npm run dev`               | Dev server (Turbopack)                          |
+| `npm run build`             | Production build                                |
+| `npm run start`             | Serve the production build                      |
+| `npm run lint`              | ESLint                                          |
+| `npm run typecheck`         | `tsc --noEmit`                                  |
+| `npm test`                  | Vitest (single run)                             |
+| `npm run test:watch`        | Vitest watch mode                               |
+| `npm run format`            | Prettier — write                                |
+| `npm run format:check`      | Prettier — check                                |
+| `npm run db:migrate:deploy` | Apply committed migrations (needs `DIRECT_URL`) |
+
+### Applying the schema locally
+
+The Prisma schema ships as committed migration files — never hand-written SQL.
+To apply them against any Postgres (a local server works; live Supabase creds
+are not required):
+
+```bash
+DIRECT_URL="postgresql://user:pass@localhost:5432/db" npm run db:migrate:deploy
+```
 
 ## Supabase setup
 
