@@ -1,3 +1,12 @@
+import { cookies } from "next/headers";
+
+import {
+  DEV_AUTH_COOKIE,
+  devAuthEmail,
+  devAuthEnabled,
+  devAuthRole,
+  devAuthUserId,
+} from "@/lib/auth/dev-auth";
 import { ensureUserProvisioned } from "@/lib/auth/provisioning";
 import { parseUserRole, type UserRole } from "@/lib/auth/roles";
 import { db } from "@/lib/db";
@@ -12,9 +21,27 @@ import {
 export interface ServerSessionUser {
   supabaseUserId: string;
   email: string | undefined;
+  /**
+   * The session email is Supabase-verified (email_confirmed_at). The claim
+   * flow gates on this — a claim is only as honest as the address behind it.
+   */
+  emailVerified: boolean;
 }
 
 export async function getServerSessionUser(): Promise<ServerSessionUser | null> {
+  // Dev harness (pending Supabase creds): role cookie + fixture identity.
+  // Inert in production builds — see src/lib/auth/dev-auth.ts.
+  if (devAuthEnabled()) {
+    const role = devAuthRole((await cookies()).get(DEV_AUTH_COOKIE)?.value);
+    if (role) {
+      return {
+        supabaseUserId: devAuthUserId(role),
+        email: devAuthEmail(role),
+        emailVerified: true,
+      };
+    }
+  }
+
   const env = supabaseEnv();
   if (!env) return null;
 
@@ -25,7 +52,11 @@ export async function getServerSessionUser(): Promise<ServerSessionUser | null> 
   } = await supabase.auth.getUser();
 
   if (error || !user) return null;
-  return { supabaseUserId: user.id, email: user.email };
+  return {
+    supabaseUserId: user.id,
+    email: user.email,
+    emailVerified: Boolean(user.email_confirmed_at),
+  };
 }
 
 /**
