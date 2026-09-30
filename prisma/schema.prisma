@@ -1,0 +1,20 @@
+// Aekobaba Packaging Marketplace — Prisma data contract.
+//
+// This scaffold PR wires the datasource and generator only. The full domain
+// schema (User, Supplier, Product, QuantityBreak, QuoteRequest, ...) arrives in
+// the schema PR per the build spec (art_MObD9666).
+//
+// Prisma 7 keeps connection URLs out of the schema file:
+//   - prisma.config.ts datasource.url ← DIRECT_URL (direct connection, port 5432)
+//     — used by the Prisma CLI for migrations (migrate deploy/dev, studio).
+//   - The runtime client reads DATABASE_URL — the Supabase pooler (transaction
+//     mode, port 6543) — from the environment at instantiation time.
+// See docs/supabase-setup.md for where these values come from.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
