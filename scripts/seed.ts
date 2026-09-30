@@ -4,6 +4,10 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { parseSeedFile, type SeedProduct, type SeedSupplier } from "../data/seed-schema";
 
+// Same env loading as prisma.config.ts — the documented `npm run db:seed`
+// reads DATABASE_URL from .env (dotenv is otherwise only wired for the CLI).
+import "dotenv/config";
+
 /**
  * Idempotent seed importer: npm run db:seed
  *
