@@ -24,6 +24,8 @@ interface FixtureOverrides {
   sourceCapturedAt?: string;
   sourceUrl?: string;
   primaryImage?: ProductVM["primaryImage"];
+  /** Gallery rows — defaults to the single primary image the seed writes. */
+  images?: ProductVM["images"];
 }
 
 export function makeProduct(overrides: FixtureOverrides = {}): ProductVM {
@@ -55,6 +57,7 @@ export function makeProduct(overrides: FixtureOverrides = {}): ProductVM {
     sourceUrl: overrides.sourceUrl ?? `https://supplier.example/${id}`,
     sourceCapturedAt: overrides.sourceCapturedAt ?? "2026-09-18T00:00:00Z",
     quantityBreaks: [],
+    images: overrides.images ?? (primaryImage ? [primaryImage] : []),
     primaryImage,
     supplier: {
       slug: "test-supplier",

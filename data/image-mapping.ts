@@ -130,6 +130,17 @@ export function productImageRow(product: SeedProductImageInput, indexInCategory:
   };
 }
 
+/**
+ * Category-level representative asset for navigation surfaces (home popular
+ * tiles, category grid rows): the category's first variant — its archetypal
+ * packshot. Categories outside the mapping table (or the hero composition)
+ * return null so callers can fall back to a text-only tile.
+ */
+export function categoryImageAsset(categorySlug: string): string | null {
+  const variants = CATEGORY_VARIANTS[categorySlug];
+  return variants ? `${IMAGE_URL_PREFIX}/${variants[0]}.png` : null;
+}
+
 /** Minimal Prisma delegate shape the image writer needs. */
 export interface ImageWriteDelegate {
   image: {

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { parseSeedFile, type SeedFile, type SeedProduct } from "./seed-schema";
 import {
+  categoryImageAsset,
   createCategoryIndexWalker,
   CATEGORY_VARIANTS,
   productImageRow,
@@ -115,5 +116,24 @@ describe("seed image mapping", () => {
     }
 
     expect(total).toBe(70);
+  });
+});
+
+describe("categoryImageAsset", () => {
+  it("returns the category's archetypal (first-variant) packshot", () => {
+    expect(categoryImageAsset("pouches-bags")).toBe("/products/stand-up-pouch.png");
+    expect(categoryImageAsset("mailers")).toBe("/products/mailer-bag.png");
+  });
+
+  it("resolves an asset for every category slug in the seed dataset", () => {
+    for (const category of loadSeed().categories) {
+      expect(categoryImageAsset(category.slug), `no tile asset for "${category.slug}"`).toMatch(
+        /^\/products\/[a-z0-9-]+\.png$/,
+      );
+    }
+  });
+
+  it("returns null for slugs outside the mapping table", () => {
+    expect(categoryImageAsset("not-a-category")).toBeNull();
   });
 });
