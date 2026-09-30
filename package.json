@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:migrate:deploy": "prisma migrate deploy",
+    "db:seed": "tsx scripts/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "prettier": "^3.9.9",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5",
     "vitest": "^4.1.11"
   }
