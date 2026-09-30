@@ -295,15 +295,6 @@ const CATEGORY_INDEX: CategoryIndexEntry[] = [
 ];
 
 // ─── Popular entry tiles ─────────────────────────────────────────────────────
-// Home tiles (spec C4): "Coffee, Hot Sauce, Skincare, Supplements…" linking
-// straight into pre-filtered results.
-
-export const POPULAR_ENTRIES: { label: string; query: string }[] = [
-  { label: "Coffee", query: "coffee" },
-  { label: "Hot Sauce", query: "hot sauce" },
-  { label: "Skincare", query: "skincare" },
-  { label: "Supplements", query: "supplements" },
-  { label: "Tea", query: "tea" },
-  { label: "Snacks", query: "snacks" },
-];
-
+// Removed (user review): the home tile row showed use-case entries (Coffee,
+// Hot Sauce, Skincare…) and now renders packaging-material categories from
+// real Category rows instead — see popular.ts.

@@ -2,17 +2,20 @@ import Link from "next/link";
 
 import { SearchForm } from "@/components/catalog/search-form";
 import { getCategories } from "@/lib/catalog/queries";
-import { POPULAR_ENTRIES } from "@/lib/catalog/aliases";
+import { popularCategories } from "@/lib/catalog/popular";
 
 // Home (spec C4): one hero question — "What are you packaging?" — free-text
-// search through the taxonomy aliases, popular entry tiles into pre-filtered
-// results, and the full category grid. Everything browsable signed-out.
+// search through the taxonomy aliases, popular packaging tiles into
+// pre-filtered results, and the full category grid. Everything browsable
+// signed-out. Popular tiles are material categories only (user review: no
+// use-case entries in navigation).
 
 // Catalog pages render at request time — the build must never need a database.
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const categories = await getCategories();
+  const popular = popularCategories(categories);
 
   return (
     <div>
@@ -23,8 +26,8 @@ export default async function HomePage() {
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-neutral-600 sm:text-base">
             Real packaging from real suppliers — every price a verified, dated snapshot from the
-            supplier&rsquo;s own page. Search your product, find packaging, request quotes from
-            everyone at once.
+            supplier&rsquo;s own page. Search pouches, bottles, labels, and more, then request
+            quotes from everyone at once.
           </p>
           <div className="mx-auto mt-6 max-w-xl">
             <SearchForm />
@@ -33,17 +36,17 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10">
-        <h2 className="text-lg font-semibold text-ink">Popular with brands</h2>
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          {POPULAR_ENTRIES.map((entry) => (
+        <h2 className="text-lg font-semibold text-ink">Popular packaging</h2>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {popular.map((category) => (
             <Link
-              key={entry.label}
-              href={`/results?q=${encodeURIComponent(entry.query)}`}
+              key={category.slug}
+              href={`/results?category=${encodeURIComponent(category.slug)}`}
               data-testid="popular-entry"
-              data-entry={entry.label}
+              data-entry={category.slug}
               className="rounded-lg border border-neutral-200 bg-white px-4 py-5 text-center text-sm font-medium text-ink shadow-sm transition-colors hover:border-accent hover:bg-accent-soft"
             >
-              {entry.label}
+              {category.name}
             </Link>
           ))}
         </div>

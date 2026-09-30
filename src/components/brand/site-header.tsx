@@ -29,7 +29,7 @@ export function SiteHeader() {
               id="site-search"
               type="search"
               name="q"
-              placeholder="What are you packaging? Try “coffee” or “hot sauce”"
+              placeholder="What are you packaging? Try “pouches” or “labels”"
               className="w-full px-3 py-2 text-sm text-ink placeholder:text-neutral-400 focus:outline-none"
             />
             <button

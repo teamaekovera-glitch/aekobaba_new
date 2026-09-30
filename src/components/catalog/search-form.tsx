@@ -15,7 +15,7 @@ export function SearchForm({ size = "lg" }: { size?: "lg" | "sm" }) {
           id={size === "lg" ? "hero-search" : "small-search"}
           type="search"
           name="q"
-          placeholder="What are you packaging? Try “coffee”, “hot sauce”, “skincare”…"
+          placeholder="What are you packaging? Try “pouches”, “bottles”, “labels”…"
           className={`w-full text-ink placeholder:text-neutral-400 focus:outline-none ${
             size === "lg" ? "px-4 py-3 text-base" : "px-3 py-2 text-sm"
           }`}
