@@ -101,7 +101,7 @@ export function BasketView({ signedInRole }: BasketViewProps) {
         </p>
         <Link
           href="/results"
-          className="mt-6 inline-block rounded-md bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent-dark"
+          className="mt-6 inline-block rounded-md bg-action px-4 py-2 text-sm font-medium text-white hover:bg-action-strong"
         >
           Browse packaging
         </Link>
@@ -218,7 +218,7 @@ export function BasketView({ signedInRole }: BasketViewProps) {
           type="submit"
           data-testid="submit-quote-request"
           disabled={submitState.kind === "sending"}
-          className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-dark disabled:opacity-60"
+          className="mt-4 rounded-md bg-action px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-action-strong disabled:opacity-60"
         >
           {submitState.kind === "sending"
             ? "Sending…"

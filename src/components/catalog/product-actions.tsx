@@ -31,7 +31,7 @@ export function ProductActions({
         type="button"
         data-testid="add-to-quote-basket"
         onClick={() => onAddToQuoteBasket(product)}
-        className={`${compact} bg-accent text-white hover:bg-accent-dark`}
+        className={`${compact} bg-action text-white hover:bg-action-strong`}
       >
         Add to Quote Basket
       </button>
