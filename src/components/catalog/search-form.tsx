@@ -22,8 +22,10 @@ export function SearchForm({ size = "lg" }: { size?: "lg" | "sm" }) {
         />
         <button
           type="submit"
-          className={`bg-accent px-5 font-medium text-white transition-colors hover:bg-accent-dark ${
-            size === "lg" ? "text-sm" : "text-xs"
+          className={`px-5 font-medium text-white transition-colors ${
+            size === "lg"
+              ? "bg-action text-sm hover:bg-action-strong"
+              : "bg-accent text-xs hover:bg-accent-dark"
           }`}
         >
           Find packaging

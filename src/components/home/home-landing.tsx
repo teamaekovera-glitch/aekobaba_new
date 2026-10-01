@@ -31,13 +31,13 @@ export function HomeLanding({ categories, featured }: { categories: CategoryVM[]
 
   return (
     <div>
-      <section className="border-b border-neutral-200 bg-accent-soft/60">
+      <section className="border-b border-charcoal-edge bg-charcoal">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-12 sm:py-16 lg:grid-cols-2 lg:gap-12">
           <div className="text-center lg:text-left">
-            <h1 className="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+            <h1 className="text-3xl font-semibold tracking-tight text-on-dark sm:text-4xl">
               What are you packaging?
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-neutral-600 sm:text-base lg:mx-0">
+            <p className="mx-auto mt-3 max-w-xl text-sm text-on-dark-muted sm:text-base lg:mx-0">
               Real packaging from real suppliers — every price a verified, dated snapshot from the
               supplier&rsquo;s own page. Search pouches, bottles, labels, and more, then request
               quotes from everyone at once.
@@ -54,7 +54,7 @@ export function HomeLanding({ categories, featured }: { categories: CategoryVM[]
               height={HERO_IMAGE.height}
               priority
               sizes="(min-width: 1024px) 640px, 100vw"
-              className="h-auto w-full rounded-xl shadow-md"
+              className="h-auto w-full rounded-xl shadow-md ring-1 ring-charcoal-edge"
             />
           </div>
         </div>
