@@ -12,10 +12,10 @@ import { BasketBadge } from "@/components/quotes/basket-badge";
 export function SiteHeader() {
 
   return (
-    <header className="border-b border-neutral-200 bg-accent text-white">
+    <header className="border-b border-charcoal-edge bg-charcoal text-on-dark">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap sm:gap-4">
         <Link href="/" aria-label="Aekobaba — home" className="shrink-0">
-          {/* Reversed white logo reads cleanly on the navy surface. */}
+          {/* Reversed white logo reads cleanly on the charcoal surface. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/logo-white.png" alt="Aekobaba" className="h-9 w-auto" />
         </Link>
@@ -34,7 +34,7 @@ export function SiteHeader() {
             />
             <button
               type="submit"
-              className="bg-steel px-4 text-sm font-medium text-white transition-colors hover:bg-accent-dark"
+              className="bg-action px-4 text-sm font-medium text-white transition-colors hover:bg-action-strong"
             >
               Search
             </button>
@@ -43,16 +43,16 @@ export function SiteHeader() {
 
         <nav className="ml-auto flex items-center gap-4 text-sm">
           <BasketBadge />
-          <Link href="/auth/sign-in" className="whitespace-nowrap text-white/90 hover:text-white hover:underline">
+          <Link href="/auth/sign-in" className="whitespace-nowrap text-on-dark/90 hover:text-on-dark hover:underline">
             Sign in
           </Link>
         </nav>
       </div>
 
-      <div className="border-t border-white/10">
+      <div className="border-t border-charcoal-edge">
         <div className="mx-auto max-w-7xl px-4">
           <details className="group relative">
-            <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium text-white/90 hover:text-white">
+            <summary className="flex w-fit cursor-pointer list-none items-center gap-2 py-2 text-sm font-medium text-on-dark/90 hover:text-on-dark">
               <span aria-hidden>☰</span> All categories
             </summary>
             <div className="absolute left-0 z-20 mt-0 w-80 rounded-b-md border border-neutral-200 bg-white py-2 shadow-lg">
